@@ -100,29 +100,37 @@ def euclidean_heuristic(a, b):
 
 def dfs_search(maze, start, goal):
     """
-    DFS를 이용한 경로 탐색
+    DFS 경로 탐색
+    - 경로 리스트 복사 제거 (메모리 최적화)
+    - came_from 딕셔너리를 사용하여 방문 체크 및 경로 복원
     """
-    visited = set()
-    stack = [(start, [start])]  # (현재 위치, 지금까지의 경로)
+    # 스택에는 현재 위치만 저장
+    stack = [start]
+    # 방문 여부와 경로 복원을 동시에 처리 (Key: 현재노드, Value: 부모노드)
+    came_from = {start: None}
     visited_history = [start]
     
     while stack:
-        current, path = stack.pop()
+        current = stack.pop()
         
         if current == goal:
-            return path, len(visited), visited_history
+            # 목표지점에 도달하면 came_from을 역추적하여 경로 복원
+            path = []
+            temp = current
+            while temp is not None:
+                path.append(temp)
+                temp = came_from[temp]
+            path = path[::-1]  # 역순(Goal->Start)이므로 뒤집어서 반환
+            return path, len(came_from), visited_history
         
-        if current in visited:
-            continue
-        
-        visited.add(current)
-        visited_history.append(current)
-        
+        # 이웃 노드 탐색
         for neighbor in get_neighbors(maze, current):
-            if neighbor not in visited:
-                stack.append((neighbor, path + [neighbor]))
+            if neighbor not in came_from:
+                came_from[neighbor] = current
+                stack.append(neighbor)
+                visited_history.append(neighbor)
     
-    return None, len(visited), visited_history
+    return [], len(came_from), visited_history  # 경로를 찾지 못한 경우 빈 리스트 반환
 
 def bfs_search(maze, start, goal):
     """너비 우선 탐색 (BFS) 구현: 최단 경로 보장"""
